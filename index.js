@@ -1,6 +1,7 @@
 const crypto = require('crypto')
 const { Optimizer } = require('@parcel/plugin')
 const cheerio = require('cheerio')
+require('dotenv').config()
 
 const sha256 = x =>
   crypto.createHash('sha256').update(x, 'utf8').digest('base64')
@@ -16,6 +17,22 @@ const buildCspContents = config => {
 module.exports = new Optimizer({
   async loadConfig({ config }) {
     let { contents } = await config.getConfig(['.csprc.json', '.csprc'])
+    for (const key in contents) {
+      const envVarsFound = contents[key].matchAll(
+        /(?<full>\$ENV\.(?<key>\w*))/g
+      )
+      let result = envVarsFound.next()
+      while (!result.done) {
+        const regexResult = result.value
+
+        contents[key] = contents[key].replace(
+          regexResult.groups['full'],
+          process.env[regexResult.groups['key']]
+        )
+
+        result = envVarsFound.next()
+      }
+    }
     return contents
   },
   async optimize({ contents, map, config }) {

@@ -38,12 +38,13 @@ It's very important that this happens _last_ because if there's anything else th
 
 Create a `.csprc` config at the root of your directory. It should contain something like this:
 
-`script-src` is the only one that gets processed at all. Any other keys you specify are simply used to generate the final CSP string.
+`script-src` is the only one that gets processed at all. Any other keys you specify are simply used to generate the final CSP string. Optionally, use `$ENV.ENVIRONMENT_VAR_NAME` to load an environment variable through [dotenv](https://www.npmjs.com/package/dotenv).
 
 ```json
 {
   "script-src": ["'self'", "polyfill.io"],
   "object-src": "'none'",
+  "connect-src": "$ENV.DATABASE_URL",
   "base-uri": "'none'"
 }
 ```
