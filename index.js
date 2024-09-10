@@ -44,7 +44,8 @@ module.exports = new Optimizer({
     // find scripts that have inline contents
     $('script').map(function () {
       const html = $(this).html()
-      if (html) {
+      // Ensure the inline script isn't just whitespace
+      if (html.trim()) {
         const hash = `sha256-${sha256(html)}`
         scriptSrc.push(`'${hash}'`)
         $(this).attr('integrity', hash)
