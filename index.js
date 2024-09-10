@@ -1,6 +1,8 @@
 const crypto = require('crypto')
 const { Optimizer } = require('@parcel/plugin')
 const cheerio = require('cheerio')
+const fs = require("fs")
+const path = require("path")
 require('dotenv').config()
 
 const sha256 = x =>
@@ -12,6 +14,12 @@ const buildCspContents = config => {
     buff.push(`${key} ${config[key]}`)
   }
   return buff.join(';') + ';'
+}
+
+const calculateAndPushHash = (cheerioElement, contentString, destArray) => {
+  const hash = `sha256-${sha256(contentString)}`
+  destArray.push(`'${hash}'`)
+  cheerioElement.attr('integrity', hash)
 }
 
 module.exports = new Optimizer({
@@ -38,17 +46,26 @@ module.exports = new Optimizer({
   async optimize({ contents, map, config }) {
     const configCopy = { ...config }
     const scriptSrc = config['script-src'] || []
+    const distDir = process.env["DIST_DIR"] || "dist/";
 
     const $ = cheerio.load(contents)
 
     // find scripts that have inline contents
     $('script').map(function () {
       const html = $(this).html()
-      // Ensure the inline script isn't just whitespace
+      const src = $(this).attr("src");
+
+      // If inline script with content aside from whitespace
       if (html.trim()) {
-        const hash = `sha256-${sha256(html)}`
-        scriptSrc.push(`'${hash}'`)
-        $(this).attr('integrity', hash)
+        calculateAndPushHash($(this), html, scriptSrc)
+      }
+      // If external script
+      if (src) {
+        // If local
+        if (src.startsWith("/")) {
+          const data = fs.readFileSync(path.join(distDir, src) , { encoding: "utf-8" })
+          calculateAndPushHash($(this), data, scriptSrc)
+        }
       }
       return this
     })
