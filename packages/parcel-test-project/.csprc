@@ -1,5 +1,0 @@
-{
-  "script-src": ["'self'", "polyfill.io"],
-  "object-src": "'none'",
-  "base-uri": "'none'"
-}
