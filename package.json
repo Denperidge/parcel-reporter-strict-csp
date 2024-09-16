@@ -1,61 +1,53 @@
 {
   "name": "parcel-reporter-strict-csp",
-  "version": "1.0.0",
-  "source": "index.ts",
-  "types": "dist/types.d.ts",
-  "main": "dist/index.js",
-  "module": "dist/module.js",
-  "engines": {
-    "parcel": "2.x"
-  },
-  "description": "Parcel 2.0+ plugin for generating Content Security Policy that also generates hashes for inline scripts.",
+  "description": "Parcel 2 plugin for automatically generating a strict script-src Content-Security-Policy",
+  "version": "0.1.0",
+  "license": "MIT",
   "scripts": {
-    "prepublish": "npm run format && npm run lint",
-    "lint": "eslint .",
-    "format": "prettier --write .",
     "watch": "parcel watch",
     "build": "parcel build"
   },
+  "source": "index.ts",
+  "main": "dist/index.js",
+  "module": "dist/module.js",
+  "types": "dist/types.d.ts",
   "files": [
-    "dist/index.js",
-    "dist/module.js"
+    "dist/*"
   ],
   "browserslist": "> 0.5%, last 2 versions, not dead",
-  "keywords": [
-    "parcel",
-    "inline script",
-    "CSP",
-    "Content Security Policy"
-  ],
-  "author": {
-    "name": "Henrik Joreteg",
-    "email": "henrik@joreteg.com",
-    "url": "https://joreteg.com"
+  "engines": {
+    "parcel": "2.x"
   },
-  "license": "MIT",
+  "contributors": [
+    {
+      "name": "Cat",
+      "email": "cat@denperidge.com",
+      "url": "https://denperidge.com"
+    },
+    {
+      "name": "Henrik Joreteg",
+      "email": "henrik@joreteg.com",
+      "url": "https://joreteg.com"
+    }
+  ],
+  "dependencies": {
+    "@parcel/plugin": "^2.12.0",
+    "cheerio": "1.0.0-rc.10"
+  },
   "devDependencies": {
     "@parcel/packager-ts": "2.12.0",
     "@parcel/transformer-typescript-types": "^2.12.0",
     "@types/cheerio": "^0.22.35",
     "@types/node": "^22.5.5",
-    "eslint": "7.18.0",
+    "eslint": "^9.10.0",
     "parcel": "2.0.0",
-    "prettier": "2.2.1",
-    "tape": "5.0.1",
+    "prettier": "^3.3.3",
     "typescript": "^5.6.2"
   },
-  "prettier": {
-    "semi": false,
-    "arrowParens": "avoid",
-    "singleQuote": true
-  },
-  "dependencies": {
-    "@parcel/plugin": "^2.12.0",
-    "@types/jsdom": "^21.1.7",
-    "cheerio": "1.0.0-rc.10",
-    "dotenv": "^16.4.5",
-    "jquery": "^3.7.1",
-    "jsdom": "^25.0.0",
-    "umbrellajs": "^3.3.3"
-  }
+  "keywords": [
+    "parcel",
+    "parcel-plugin",
+    "CSP",
+    "Content Security Policy"
+  ]
 }

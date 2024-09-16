@@ -1,12 +1,83 @@
-# parcel-optimizer-csp
+# parcel-reporter-strict-csp
 
-![](https://img.shields.io/npm/dm/parcel-optimizer-csp.svg)![](https://img.shields.io/npm/v/parcel-optimizer-csp.svg)![](https://img.shields.io/npm/l/parcel-optimizer-csp.svg)
+A [Parcel 2.0+](https://parceljs.org/) Parcel 2 plugin automatically generating a strict script-src Content-Security-Policy
 
-A [Parcel 2.0+](https://parceljs.org/) plugin for generating and inserting a CSP based on a super simple JSON config.
+It automatically calculates hashes for your scripts, appending those to `<script integrity="...">` and CSP `<meta http-equiv="Content-Security-Policy" content="..."/>` so that browsers will run it.
 
-It automatically calculates a hash for your inline scripts and appends that to the `script-src` in the CSP so that browsers will run it.
+## How-to
+### Use as plugin
+1. Install the plugin
 
-## Why I made this:
+```bash
+# Install using npm
+npm install parcel-reporter-strict-csp
+
+# Alternatively, install using yarn
+yarn add parcel-reporter-strict-csp
+```
+
+2. Now we'll tell Parcel to use the plugin. Create/edit your `.parcelrc` as follows:
+
+```json
+{
+  "extends": ["@parcel/config-default"],
+  "reporters": ["...", "parcel-reporter-strict-csp"]
+}
+```
+
+> **Note**: the `"..."` is important it tells parcel to do all the other stuff it would normally to do optimize. This just tacks on our new plugin at the end. 3. Add a CSP meta element to your HTML files
+
+```html
+<head>
+  <!--
+    Adapt the CSP as wanted!
+    If you add a script-src here already, this plugin will automatically add the hashes to it
+    Otherwise, the plugin will add a new script-src key for you
+   -->
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'none'; base-uri 'none';"
+  />
+  <script src="index.js"></script>
+</head>
+```
+
+4. Done! After each build, the plugin will adapt .html files
+
+```html
+<!-- Example output -->
+<meta
+  http-equiv="Content-Security-Policy"
+  content="object-src 'none'; base-uri 'none'; script-src 'sha256-l0pssYvwZ5XoYtCOykG2S8AI2G4VgXJ8KAN+vpj5Tdd='"
+/>
+<script
+  src="/index.8ce62db9.js"
+  type="module"
+  integrity="sha256-l0pssYvwZ5XoYtCOykG2S8AI2G4VgXJ8KAN+vpj5Tdd=">
+</script>
+```
+
+### Build locally
+This requires [Git](https://git-scm.com/), [Node.js](https://nodejs.org/en) & [Yarn](https://yarnpkg.com/getting-started/install) to be intalled
+```bash
+# Clone repository & change dir
+git clone https://github.com/Denperidge/parcel-reporter-strict-csp.git
+cd parcel-reporter-strict-csp
+
+# Install requirements
+yarn install
+
+# Build once
+yarn build
+
+# Watch for changes
+yarn watch
+```
+
+## Explanation
+
+### Why a parcel CSP plugin is necessary
+*Note: this section is from Henrik Joreteg's [parcel-optimizer-csp](www.npmjs.com/package/parcel-optimizer-csp) README, which holds a good explanation of the need for hash-based csp in static webapps*
 
 We have an inline script for [Xchart.com](https://xchart.com/) that registers global error handlers. We do this as inline script, because if there's an error with loading a JS file required to run the app we want to know about it.
 
@@ -20,7 +91,7 @@ But, one of the tricky things people quickly notice is that if you have an inlin
 
 ```html
 <script>
-  console.log('I might be an analytics snippet or something')
+  console.log("I might be an analytics snippet or something");
 </script>
 ```
 
@@ -30,69 +101,14 @@ If you're using CSP to prevent injected scripts, you can either specify a `nonce
 
 The other option is to calculate and specify a hash of each inline script that is allows to run: **That's the main reason this plugin exists**.
 
-## Why is it an Optimizer plugin?
+### Why is it a Reporter plugin?
 
-It's very important that this happens _last_ because if there's anything else that modifies the contents between the opening and closing `<script>` the hash would be different. So using the "optimize" stage made sense.
+I tried optimizer, but that doesn't have the final filenames in the HTML (thus it only works for inline scripts). I tried packager, but you can only use one, and I don't want the only packager to be something that isn't meant to be a packager. Reporter it is! Even if it still required me to replace `.getCode()` with some `readFileSync`'s.
 
-## How to use it
+## Credits
 
-Create a `.csprc` config at the root of your directory. It should contain something like this:
+This plugin is a hard fork from [parcel-optimizer-csp](www.npmjs.com/package/parcel-optimizer-csp). Check out [@HenrikJoreteg](http://twitter.com/henrikjoreteg) on twitter.
 
-`script-src` is the only one that gets processed at all. Any other keys you specify are simply used to generate the final CSP string. Optionally, use `$ENV.ENVIRONMENT_VAR_NAME` to load an environment variable through [dotenv](https://www.npmjs.com/package/dotenv).
+## License
 
-```json
-{
-  "script-src": ["'self'", "polyfill.io"],
-  "object-src": "'none'",
-  "connect-src": "$ENV.DATABASE_URL",
-  "base-uri": "'none'"
-}
-```
-
-Then, you must tell parcel to use the plugin. So you create / edit your `.parcelrc` as follows:
-
-```json
-{
-  "extends": "@parcel/config-default",
-  "optimizers": {
-    "*.html": ["...", "parcel-optimizer-csp"]
-  }
-}
-```
-
-**Note**: the `"..."` is important it tells parcel to do all the other stuff it would normally to do optimize. This just tacks on our new plugin at the end.
-
-If with that `.csprc` and `.parcelrc` when you use Parcel to build your project for production this plugin will inject prepend the following CSP into the `<head>` your final HTML:
-
-```html
-<meta
-  http-equiv="Content-Security-Policy"
-  content="script-src 'self' polyfill.io 'sha256-uhzHJtYe3+WE2TVTxNYzdpz1n2axTAdgGXDltcHRQvc='; object-src 'none'; base-uri 'none';"
-/>
-```
-
-**Please note**: certain CSP values need to be in single quotes. For example: `'self'` and `'none'`. This plugin does not attempt to quote them for you. It simply inserts them the way you've specified them.
-
-## Running tests
-
-```
-npm test
-```
-
-## install
-
-```
-npm install parcel-optimizer-csp
-```
-
-## Change log
-
-- `1.0.0`: First public release.
-
-## credits
-
-If you like this follow [@HenrikJoreteg](http://twitter.com/henrikjoreteg) on twitter.
-
-## license
-
-[MIT](http://mit.joreteg.com/)
+This project is licensed under the [MIT license](LICENSE).
