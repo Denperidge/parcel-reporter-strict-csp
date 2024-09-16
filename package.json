@@ -3,6 +3,7 @@
   "description": "Parcel 2 plugin for automatically generating a strict script-src Content-Security-Policy",
   "version": "0.1.1",
   "license": "MIT",
+  "repository": "https://github.com/Denperidge/parcel-reporter-strict-csp.git",
   "scripts": {
     "watch": "parcel watch",
     "build": "parcel build"
