@@ -20,6 +20,7 @@
     "dist/index.js",
     "dist/module.js"
   ],
+  "browserslist": "> 0.5%, last 2 versions, not dead",
   "keywords": [
     "parcel",
     "inline script",

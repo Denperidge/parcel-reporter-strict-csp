@@ -1,9 +1,7 @@
 import * as crypto from "crypto";
 import { Reporter } from "@parcel/plugin";
 import { FileSystem } from "@parcel/fs/lib/types";
-import { writeFileSync } from "fs";
 import * as cheerio from "cheerio";
-
 
 const sha256 = x =>
   crypto.createHash('sha256').update(x, 'utf8').digest('base64')
@@ -38,7 +36,9 @@ const parseHtml = (fs:FileSystem, contents: string, hashes: {[key:string]: strin
     $("script").map(function () {
       const scriptSrc = $(this).attr("src");
       if (scriptSrc) {
-        const hash = `sha256-${hashes[scriptSrc]}`
+        const data = fs.readFileSync("dist" + scriptSrc).toString("utf-8")
+        console.log(data)
+        const hash = `sha256-${sha256(data)}`
         scriptHashes.push(`'${hash}'`)
         $(this).attr('integrity', hash)
       }
@@ -58,6 +58,7 @@ module.exports = new Reporter({
     if (event.type != 'buildSuccess') {
       return
     }
+    
 
     const filesJs = event.bundleGraph.getBundles().filter((bundle) => bundle.type == "js");
     const htmlBundles = event.bundleGraph.getBundles().filter((bundle) => bundle.type == "html");
@@ -80,16 +81,21 @@ module.exports = new Reporter({
         const dependencyAsset = event.bundleGraph.getResolvedAsset(dependency, bundle)
         if (dependencyAsset) {
           if (dependencyAsset.type == "js") {
-            console.log(await dependencyAsset.getCode())
+            //console.log(await dependencyAsset.getCode())
             hashes[dependency.id] = sha256(await dependencyAsset.getCode());
+            
           }
         }
-      }
-  
+      }  
 
-      const data = parseHtml(options.outputFS, await bundleEntry.getCode(), hashes);
+      //options.outputFS.writeFile("test", await bundleEntry.getCode(), {});
+
       
-      writeFileSync(bundle.filePath, data.html, {});
+      // await bundleEntry.getCode() gives temp filenames
+
+      const data = parseHtml(options.outputFS, options.outputFS.readFileSync(bundle.filePath).toString("utf-8"), hashes);
+      
+      options.outputFS.writeFile(bundle.filePath, data.html, {});
     }
   },
 })
