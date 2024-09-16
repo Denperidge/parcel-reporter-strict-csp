@@ -8,6 +8,28 @@ require('dotenv').config()
 const sha256 = x =>
   crypto.createHash('sha256').update(x, 'utf8').digest('base64')
 
+const _readFileIfExists = filename => {
+  if (fs.existsSync(filename)) {
+    return fs.readFileSync(filename, {encoding: "utf-8"});
+  } else {
+    return false;
+  }
+}
+
+const waitForFile = (filename, attempt=0) => {
+  if (attempt >= 3) {
+    throw new Error(`${filename} could not be read after ${attempt} attempts`);
+  } 
+  const data = _readFileIfExists(filename);
+  if (data) {
+    return data;
+  } else {
+    setTimeout(function(){
+      waitForFile(filename, attempt+1);
+    }, 1000);
+  } 
+}
+
 const buildCspContents = config => {
   let buff = []
   for (const key in config) {
@@ -73,14 +95,16 @@ module.exports = new Optimizer({
       if (src) {
         // If local
         if (src.startsWith('/')) {
-          const data = fs.readFileSync(path.join(distDir, src), {
-            encoding: 'utf-8',
-          })
+          const data = waitForFile(path.join(distDir, src));
           calculateAndPushHash($(this), data, scriptSrc)
         }
         if (src.startsWith("http")) {
-          console.log(src.includes(ignoreHost))
           console.log(src)
+          if (src.includes(ignoreHost)) {
+          }
+          if (src.includes("HASH_REF")) {
+            throw new Error(src)
+          }
         }
       }
       return this
