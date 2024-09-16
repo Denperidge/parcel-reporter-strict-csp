@@ -20,7 +20,27 @@ const calculateAndPushHash = (content: string, destArray: string[]) => {
   //$(cheerioElement).attr('integrity', hash)
 }
 
+function addToCsp($: cheerio.CheerioAPI, key: string, value:string) {
+  const cspElem = $("meta[http-equiv='Content-Security-Policy']");
+  const originalCsp = cspElem.attr("content");
+  let newCsp = "";
 
+  if (!originalCsp) {
+    throw new Error("parcel-reporter-strict-csp requires a <meta http-equiv=\"Content-Security-Policy\" content=\"\">  to be present in your HTML!")
+  }
+
+  if (originalCsp.includes(key)) {
+    newCsp = originalCsp.replace(key, `${key} ${value}`);
+  } else {
+    if (originalCsp.trim().endsWith(";")) {
+      newCsp = `${originalCsp} ${key} ${value}`
+    } else {
+      newCsp = `${originalCsp}; ${key} ${value}`
+    }
+  }
+
+  cspElem.attr("content", newCsp)
+}
 
 
 const parseHtml = (fs:FileSystem, contents: string, hashes: {[key:string]: string}) => {
@@ -33,14 +53,15 @@ const parseHtml = (fs:FileSystem, contents: string, hashes: {[key:string]: strin
     */
     const ignoreHost = process.env['HOST'] || null
 
+
     $("script").map(function () {
       const scriptSrc = $(this).attr("src");
       if (scriptSrc) {
         const data = fs.readFileSync("dist" + scriptSrc).toString("utf-8")
         console.log(data)
         const hash = `sha256-${sha256(data)}`
-        scriptHashes.push(`'${hash}'`)
         $(this).attr('integrity', hash)
+        addToCsp($, "script-src", `'${hash}'`)
       }
       return this
     })
