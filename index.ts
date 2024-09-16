@@ -52,7 +52,7 @@ const parseHtml = (fs:FileSystem, htmlContents: string, distDir: string, ignoreH
 
   $("script").map(function () {
     const scriptSrc = getAssetUrl($, this, "src", ignoreHost);
-    const data = fs.readFileSync("dist" + scriptSrc).toString("utf-8")
+    const data = fs.readFileSync(distDir + scriptSrc).toString("utf-8")
     const hash = `sha256-${sha256(data)}`;
     $(this).attr('integrity', hash)
     addToHtmlMetaCsp($, "script-src", `'${hash}'`)
@@ -73,15 +73,6 @@ module.exports = new Reporter({
       return
     }
 
-    
-
-        /* The host defined here will be ignored when checking for local assets
-       e.g. HOST=https://example.com
-       <script src="https://example.com/index.js"" --> "distDir/index.js"
-    */
-    const distDir = options.projectRoot + "/" + (options.env["DIST_DIR"] || "dist/");
-
-    const filesJs = event.bundleGraph.getBundles().filter((bundle) => bundle.type == "js");
     const htmlBundles = event.bundleGraph.getBundles().filter((bundle) => bundle.type == "html");
     
     for (const bundle of htmlBundles) {
@@ -90,6 +81,7 @@ module.exports = new Reporter({
         throw new Error(`Could not get main entry of ${bundle.filePath}`)
       }
 
+      const distDir = bundle.target.distDir + "/";
       const ignoreHost = bundle.target.publicUrl;
 
       const data = parseHtml(options.outputFS, options.outputFS.readFileSync(bundle.filePath).toString("utf-8"), distDir, ignoreHost);
