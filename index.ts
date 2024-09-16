@@ -6,13 +6,16 @@ import * as cheerio from "cheerio";
 const sha256 = x =>
   crypto.createHash('sha256').update(x, 'utf8').digest('base64')
 
-const calculateAndPushHash = (content: string, destArray: string[]) => {
-  const hash = `sha256-${sha256(content)}`
-  destArray.push(`'${hash}'`)
-  //$(cheerioElement).attr('integrity', hash)
+const calculateAndImplementAssetHash = ($:cheerio.CheerioAPI, elem:cheerio.Element, fs: FileSystem, filename: string, cspKey: string) => {
+  // Read filename
+  const data = fs.readFileSync(filename).toString("utf-8")
+  const hash = `sha256-${sha256(data)}`;
+  // Set element integrity attribute
+  $(elem).attr('integrity', hash);
+  addToHtmlMetaCsp($, cspKey, `'${hash}'`)
 }
 
-function addToHtmlMetaCsp($: cheerio.CheerioAPI, key: string, value:string) {
+function addToHtmlMetaCsp($: cheerio.CheerioAPI, cspKey: string, value:string) {
   const cspElem = $("meta[http-equiv='Content-Security-Policy']");
   const originalCsp = cspElem.attr("content");
   let newCsp = "";
@@ -21,13 +24,13 @@ function addToHtmlMetaCsp($: cheerio.CheerioAPI, key: string, value:string) {
     throw new Error("parcel-reporter-strict-csp requires a <meta http-equiv=\"Content-Security-Policy\" content=\"\">  to be present in your HTML!")
   }
 
-  if (originalCsp.includes(key)) {
-    newCsp = originalCsp.replace(key, `${key} ${value}`);
+  if (originalCsp.includes(cspKey)) {
+    newCsp = originalCsp.replace(cspKey, `${cspKey} ${value}`);
   } else {
     if (originalCsp.trim().endsWith(";")) {
-      newCsp = `${originalCsp} ${key} ${value}`
+      newCsp = `${originalCsp} ${cspKey} ${value}`
     } else {
-      newCsp = `${originalCsp}; ${key} ${value}`
+      newCsp = `${originalCsp}; ${cspKey} ${value}`
     }
   }
 
@@ -52,12 +55,16 @@ const parseHtml = (fs:FileSystem, htmlContents: string, distDir: string, ignoreH
 
   $("script").map(function () {
     const scriptSrc = getAssetUrl($, this, "src", ignoreHost);
-    const data = fs.readFileSync(distDir + scriptSrc).toString("utf-8")
-    const hash = `sha256-${sha256(data)}`;
-    $(this).attr('integrity', hash)
-    addToHtmlMetaCsp($, "script-src", `'${hash}'`)
+    calculateAndImplementAssetHash($, this, fs, distDir + scriptSrc, "script-src")
     return this
   });
+
+  /* TODO: doesn't work
+  $("link[href$='.css']").map(function() {
+    const cssHref = getAssetUrl($, this, "href", ignoreHost);
+    calculateAndImplementAssetHash($, this, fs, distDir + cssHref, "style-src-elem");
+  });
+  */
 
   const html = $.html();
   if (!html) {
