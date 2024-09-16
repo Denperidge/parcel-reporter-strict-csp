@@ -1,7 +1,9 @@
 {
-  "name": "parcel-optimizer-csp",
+  "name": "parcel-reporter-strict-csp",
   "version": "1.0.0",
-  "main": "index.js",
+  "source": "index.ts",
+  "types": "dist/types.d.ts",
+  "main": "dist/index.js",
   "engines": {
     "parcel": "2.x"
   },
@@ -9,7 +11,9 @@
   "scripts": {
     "prepublish": "npm run format && npm run lint",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "watch": "parcel watch",
+    "build": "parcel build"
   },
   "files": [
     "index.js"
@@ -27,10 +31,14 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "@parcel/packager-ts": "2.12.0",
+    "@parcel/transformer-typescript-types": "^2.12.0",
+    "@types/node": "^22.5.5",
     "eslint": "7.18.0",
     "parcel": "2.0.0",
     "prettier": "2.2.1",
-    "tape": "5.0.1"
+    "tape": "5.0.1",
+    "typescript": "^5.6.2"
   },
   "prettier": {
     "semi": false,
@@ -38,6 +46,7 @@
     "singleQuote": true
   },
   "dependencies": {
+    "@parcel/plugin": "^2.12.0",
     "cheerio": "1.0.0-rc.10",
     "dotenv": "^16.4.5"
   }
