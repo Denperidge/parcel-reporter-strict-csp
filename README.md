@@ -17,30 +17,27 @@ yarn add parcel-reporter-strict-csp
 ```
 
 2. Now we'll tell Parcel to use the plugin. Create/edit your `.parcelrc` as follows:
+  ```json
+  {
+    "extends": ["@parcel/config-default"],
+    "reporters": ["...", "parcel-reporter-strict-csp"]
+  }
+  ```
+  > **Note**: the `"..."` is important it tells parcel to do all the other stuff it would normally to do optimize. This just tacks on our new plugin at the end.
 
-```json
-{
-  "extends": ["@parcel/config-default"],
-  "reporters": ["...", "parcel-reporter-strict-csp"]
-}
-```
-
-> **Note**: the `"..."` is important it tells parcel to do all the other stuff it would normally to do optimize. This just tacks on our new plugin at the end. 3. Add a CSP meta element to your HTML files
-
-```html
-<head>
-  <!--
-    Adapt the CSP as wanted!
-    If you add a script-src here already, this plugin will automatically add the hashes to it
-    Otherwise, the plugin will add a new script-src key for you
-   -->
-  <meta
-    http-equiv="Content-Security-Policy"
-    content="default-src 'none'; base-uri 'none';"
-  />
-  <script src="index.js"></script>
-</head>
-```
+3. Add a CSP meta element to your HTML files
+  ```html
+  <head>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; base-uri 'none';"
+    />
+    <script src="index.js"></script>
+  </head>
+  ```
+  > **Note:** Adapt the CSP as wanted!
+  > If you add a script-src here already, this plugin will automatically add the hashes to it.
+  > Otherwise, the plugin will add a new script-src key for you
 
 4. Done! After each build, the plugin will adapt .html files
 
@@ -72,6 +69,14 @@ yarn build
 
 # Watch for changes
 yarn watch
+
+# Enable yarn link (https://classic.yarnpkg.com/lang/en/docs/cli/link/)
+# This allows you to use your local parcel-reporter-strict-csp in another local repository
+yarn link
+cd ~/MyOtherProject
+yarn link parcel-reporter-strict-csp
+# From now on, imports for parcel-reporter-strict-csp will resolve to your local copy
+# See https://classic.yarnpkg.com/en/docs/cli/unlink to unlink
 ```
 
 ## Explanation
