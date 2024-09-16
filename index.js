@@ -8,26 +8,23 @@ require('dotenv').config()
 const sha256 = x =>
   crypto.createHash('sha256').update(x, 'utf8').digest('base64')
 
-const _readFileIfExists = filename => {
-  if (fs.existsSync(filename)) {
-    return fs.readFileSync(filename, {encoding: "utf-8"});
-  } else {
-    return false;
-  }
-}
-
-const waitForFile = (filename, attempt=0) => {
-  if (attempt >= 3) {
-    throw new Error(`${filename} could not be read after ${attempt} attempts`);
-  } 
-  const data = _readFileIfExists(filename);
-  if (data) {
-    return data;
-  } else {
-    setTimeout(function(){
-      waitForFile(filename, attempt+1);
-    }, 1000);
-  } 
+const waitForFile = (filename) => {
+  return new Promise(function(resolve, reject) {
+    let attempt = 0;
+    const interval = setInterval(function(){
+      if (attempt >= 3) {
+        clearInterval(interval);
+        //throw new Error(`${filename} could not be read after ${attempt} attempts`);
+      }
+      if (fs.existsSync(filename)) {
+        clearInterval(interval);
+        resolve(fs.readFileSync(filename, {encoding: "utf-8"}));
+      }
+      else {
+        attempt++;
+      }
+    }, 1200);
+  });
 }
 
 const buildCspContents = config => {
@@ -65,7 +62,7 @@ module.exports = new Optimizer({
     }
     return contents
   },
-  async optimize({ contents, map, config }) {
+  async optimize({ contents, map, config, options }) {
     const configCopy = { ...config }
     const scriptSrc = config['script-src'] || []
     const distDir = process.env['DIST_DIR'] || 'dist/'
@@ -78,7 +75,7 @@ module.exports = new Optimizer({
     const $ = cheerio.load(contents)
 
     // find scripts that have inline contents
-    $('script').map(function () {
+    $('script').map(async function () {
       const html = $(this).html()
       const src = $(this).attr('src')//.replace(ignoreHost, "")
       console.log(this)
@@ -95,11 +92,11 @@ module.exports = new Optimizer({
       if (src) {
         // If local
         if (src.startsWith('/')) {
-          const data = waitForFile(path.join(distDir, src));
+          const data = await waitForFile(path.join(distDir, src));
           calculateAndPushHash($(this), data, scriptSrc)
         }
         if (src.startsWith("http")) {
-          console.log(src)
+          //console.log(src)
           if (src.includes(ignoreHost)) {
           }
           if (src.includes("HASH_REF")) {
