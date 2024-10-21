@@ -1,6 +1,6 @@
 # parcel-reporter-strict-csp
 
-A [Parcel 2.0+](https://parceljs.org/) Parcel 2 plugin automatically generating a strict script-src Content-Security-Policy
+A [Parcel 2.0+](https://parceljs.org/) plugin for generating a strict script-src Content-Security-Policy
 
 It automatically calculates hashes for your scripts, appending those to `<script integrity="...">` and CSP `<meta http-equiv="Content-Security-Policy" content="..."/>` so that browsers will run it.
 

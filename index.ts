@@ -33,9 +33,6 @@ function addToHtmlMetaCsp(
   const originalCsp = cspElem.attr("content");
   let newCsp = "";
 
-  console.log($.html())
-  console.log(cspElem)
-
   if (!originalCsp) {
     throw new Error(
       'parcel-reporter-strict-csp requires a <meta http-equiv="Content-Security-Policy" content="">  to be present in your HTML!',
