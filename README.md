@@ -4,6 +4,8 @@ A [Parcel 2.0+](https://parceljs.org/) Parcel 2 plugin automatically generating 
 
 It automatically calculates hashes for your scripts, appending those to `<script integrity="...">` and CSP `<meta http-equiv="Content-Security-Policy" content="..."/>` so that browsers will run it.
 
+Additionally, it will automatically detect `NODE_ENV development`; causing the plugin to add the Parcel HMR to your generated CSP. This is turned off on any other NODE_ENV value, thus [it does not trigger when building](https://parceljs.org/features/production/#development-branch-removal).
+
 ## How-to
 ### Use as plugin
 1. Install the plugin

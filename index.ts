@@ -2,13 +2,16 @@ import * as crypto from "crypto";
 import { Reporter } from "@parcel/plugin";
 import { FileSystem } from "@parcel/fs/lib/types";
 import * as cheerio from "cheerio";
+import type { CheerioAPI } from "cheerio";
+import { PluginOptions } from "@parcel/types";
+import { Element } from "domhandler";
 
 const sha256 = (x) =>
   crypto.createHash("sha256").update(x, "utf8").digest("base64");
 
 const calculateAndImplementAssetHash = (
-  $: cheerio.CheerioAPI,
-  elem: cheerio.Element,
+  $: CheerioAPI,
+  elem: Element,
   fs: FileSystem,
   filename: string,
   cspKey: string,
@@ -22,13 +25,16 @@ const calculateAndImplementAssetHash = (
 };
 
 function addToHtmlMetaCsp(
-  $: cheerio.CheerioAPI,
+  $: CheerioAPI,
   cspKey: string,
   value: string,
 ) {
   const cspElem = $("meta[http-equiv='Content-Security-Policy']");
   const originalCsp = cspElem.attr("content");
   let newCsp = "";
+
+  console.log($.html())
+  console.log(cspElem)
 
   if (!originalCsp) {
     throw new Error(
@@ -50,8 +56,8 @@ function addToHtmlMetaCsp(
 }
 
 const getAssetUrl = (
-  $: cheerio.CheerioAPI,
-  elem: cheerio.Element,
+  $: CheerioAPI,
+  elem: Element,
   attr: string,
   ignoreHost?: string,
 ) => {
@@ -69,6 +75,7 @@ const getAssetUrl = (
 
 const parseHtml = (
   fs: FileSystem,
+  options: PluginOptions,
   htmlContents: string,
   distDir: string,
   ignoreHost?: string,
@@ -86,6 +93,17 @@ const parseHtml = (
     );
     return this;
   });
+
+  if (process.env.NODE_ENV == "development" && options.hmrOptions?.port) {
+    console.warn("development mode & Parcel HMR detected; adding necessary CSP headers")
+
+    let host = options.hmrOptions.host ? options.hmrOptions.host : "localhost";
+    let port = options.hmrOptions.port ? options.hmrOptions.port : "1234";
+
+    // Parcel HMR
+    addToHtmlMetaCsp($, "connect-src", `ws://${host}:${port}`);
+    addToHtmlMetaCsp($, "script-src", 'unsafe-eval');
+  }
 
   /* TODO: doesn't work
   $("link[href$='.css']").map(function() {
@@ -122,6 +140,7 @@ module.exports = new Reporter({
 
       const data = parseHtml(
         options.outputFS,
+        options,
         options.outputFS.readFileSync(bundle.filePath).toString("utf-8"),
         distDir,
         ignoreHost,
