@@ -5,6 +5,9 @@ import * as cheerio from "cheerio";
 import type { CheerioAPI } from "cheerio";
 import { PluginOptions } from "@parcel/types";
 import { Element } from "domhandler";
+import { warn } from "console";
+
+let warned = false;
 
 const sha256 = (x) =>
   crypto.createHash("sha256").update(x, "utf8").digest("base64");
@@ -91,15 +94,20 @@ const parseHtml = (
     return this;
   });
 
-  if (process.env.NODE_ENV == "development" && options.hmrOptions?.port) {
-    console.warn("development mode & Parcel HMR detected; adding necessary CSP headers")
+
+  // Don't use process.env, it causes this if to get removed by Parcel when building
+  if (options.env.NODE_ENV == "development" && options.hmrOptions?.port) {
+    if (!warned) {
+      console.warn("development mode & Parcel HMR detected; adding necessary CSP headers");
+      warned = true;
+    }
 
     let host = options.hmrOptions.host ? options.hmrOptions.host : "localhost";
     let port = options.hmrOptions.port ? options.hmrOptions.port : "1234";
 
     // Parcel HMR
     addToHtmlMetaCsp($, "connect-src", `ws://${host}:${port}`);
-    addToHtmlMetaCsp($, "script-src", 'unsafe-eval');
+    addToHtmlMetaCsp($, "script-src", "'unsafe-eval'");
   }
 
   /* TODO: doesn't work
